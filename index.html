@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>廠務英文縮寫筆試 (50題模擬考版)</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--text:#17202a;--muted:#6b7280;--primary:#2563eb;--good:#16a34a;--bad:#dc2626;--border:#dfe3e8}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,"Microsoft JhengHei",sans-serif;color:var(--text)}
+.wrap{max-width:760px;margin:0 auto;padding:24px 16px 50px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+h1{font-size:22px;margin:0}.stats{font-size:14px;color:var(--muted)}
+.card{background:var(--card);border-radius:18px;padding:24px;box-shadow:0 4px 18px #0000000b;border:1px solid var(--border)}
+.top{display:flex;justify-content:space-between;color:var(--muted);font-size:14px;margin-bottom:18px}
+.progress{height:8px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin-bottom:26px}.bar{height:100%;background:var(--primary);width:0;transition:.2s}
+.question{text-align:center;padding:14px 0 26px}.label{font-size:15px;color:var(--muted)}.abbr{font-size:42px;font-weight:800;letter-spacing:1px;margin-top:8px;word-break:break-word}
+.options{display:grid;gap:12px}.opt{width:100%;text-align:left;padding:16px;border:2px solid var(--border);background:white;border-radius:12px;font-size:16px;cursor:pointer;transition:.15s}.opt:hover{border-color:#93b4f7;background:#f8fbff}.opt:disabled{cursor:default}.opt .letter{font-weight:800;margin-right:9px;color:var(--primary)}
+.opt.correct{border-color:var(--good);background:#f0fdf4}.opt.wrong{border-color:var(--bad);background:#fef2f2}.opt.dim{opacity:.6}
+.feedback{margin-top:16px;padding:14px;border-radius:10px;display:none;line-height:1.55}.feedback.good{display:block;background:#f0fdf4;color:#166534}.feedback.bad{display:block;background:#fef2f2;color:#991b1b}
+.actions{display:flex;gap:10px;margin-top:18px}.btn{border:0;border-radius:10px;padding:12px 16px;font-size:15px;cursor:pointer}.primary{background:var(--primary);color:#fff}.secondary{background:#eef2f7;color:#273244}.danger{background:#fef2f2;color:var(--bad);border:1px solid #fca5a5}.next{display:none;margin-left:auto}
+.menu{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.menu button{border:1px solid var(--border);background:#fff;padding:9px 12px;border-radius:9px;cursor:pointer}.menu button.active{background:#eaf1ff;border-color:#9ab9ff;color:#1d4ed8}
+.result{text-align:center;padding:20px}.score{font-size:54px;font-weight:800;margin:10px 0}.score.pass{color:var(--good)}.score.fail{color:var(--bad)}
+.result p{color:var(--muted)}.result .row{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:18px}
+.small{font-size:13px;color:var(--muted);margin-top:16px;text-align:center}
+@media(max-width:520px){.wrap{padding:14px 10px}.card{padding:18px}.abbr{font-size:34px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>廠務英文縮寫筆試</h1><div class="stats" id="stats"></div></header>
+<div class="menu">
+<button id="examBtn" class="active" onclick="setMode('exam')">50題隨機模擬考</button>
+<button id="allBtn" onclick="setMode('all')">全題庫刷題 (399題)</button>
+<button id="wrongBtn" onclick="setMode('wrong')">錯題重考 <span id="wrongCount">0</span></button>
+<button onclick="startExam()">換一組題目 (重新開始)</button>
+<button class="danger" onclick="clearWrong()">清空錯題</button>
+</div>
+<div class="card" id="quizCard">
+  <div class="top"><span id="counter"></span><span id="accuracy"></span></div>
+  <div class="progress"><div class="bar" id="bar"></div></div>
+  <div class="question"><div class="label">下列英文縮寫的中文意義是？</div><div class="abbr" id="abbr"></div></div>
+  <div class="options" id="options"></div>
+  <div id="feedback" class="feedback"></div>
+  <div class="actions"><button class="btn secondary" onclick="skipQuestion()">跳過</button><button class="btn primary next" id="nextBtn" onclick="nextQuestion()">下一題</button></div>
+</div>
+<div class="card" id="resultCard" style="display:none"></div>
+<div class="small">總題庫共 399 筆 | 模擬考每次隨機抽 50 題，每題 2 分，滿分 100 分。</div>
+</div>
+
+<script>
+const DATA = [{"abbr": "2T-RTO", "meaning": "雙塔式蓄熱焚化爐"}, {"abbr": "3T-RTO", "meaning": "三塔式蓄熱焚化爐"}, {"abbr": "AP", "meaning": "酸洗拋光"}, {"abbr": "AWD", "meaning": "一般酸鹼廢水"}, {"abbr": "AR", "meaning": "執行要求、擴增實境"}, {"abbr": "ACF", "meaning": "活性炭塔"}, {"abbr": "ACWP", "meaning": "實支成本"}, {"abbr": "AWPD", "meaning": "工廠每日實際產出量"}, {"abbr": "TVA", "meaning": "生物及毒性單位"}, {"abbr": "ACV", "meaning": "氣動瓶頭閥、鋼瓶自動閥"}, {"abbr": "AMO", "meaning": "進階建模元件"}, {"abbr": "AOR Drain", "meaning": "高濃度有機廢水"}, {"abbr": "AOP", "meaning": "高級氧化法"}, {"abbr": "AOPs", "meaning": "高級氧化程序"}, {"abbr": "ATB", "meaning": "先進製程商業"}, {"abbr": "AAS", "meaning": "廢氣處理系統"}, {"abbr": "AHU", "meaning": "空調箱"}, {"abbr": "AOV", "meaning": "氣動閥"}, {"abbr": "AQI", "meaning": "空氣品質指標"}, {"abbr": "ABB", "meaning": "氣衝式斷路器"}, {"abbr": "AMC", "meaning": "微汙染"}, {"abbr": "AIU", "meaning": "警報介面單元"}, {"abbr": "AEX", "meaning": "鹼性廢棄系統"}, {"abbr": "AC", "meaning": "交流電"}, {"abbr": "AIBI", "meaning": "美國智慧建築學會"}, {"abbr": "ANSI", "meaning": "美國國家標準協會"}, {"abbr": "AIC", "meaning": "安培中斷容量"}, {"abbr": "AI card", "meaning": "類比輸入卡"}, {"abbr": "AO card", "meaning": "類比輸出卡"}, {"abbr": "AI", "meaning": "人工智能"}, {"abbr": "AMS", "meaning": "資產管理解決方案"}, {"abbr": "ASO", "meaning": "自動切換閥"}, {"abbr": "ATRs", "meaning": "滴定儀"}, {"abbr": "EBB", "meaning": "後段製程基準"}, {"abbr": "BG", "meaning": "晶背研磨"}, {"abbr": "BOM", "meaning": "材料清單"}, {"abbr": "BOD", "meaning": "生物需氧量"}, {"abbr": "BPSG", "meaning": "硼磷矽玻璃"}, {"abbr": "BA", "meaning": "輝光燒鈍退火處理"}, {"abbr": "BATS", "meaning": "寬平地震網即時測站"}, {"abbr": "BCWP", "meaning": "實際施工進度、可動用預算金額"}, {"abbr": "BCWS", "meaning": "預定施工進度、可請款金額"}, {"abbr": "BOE", "meaning": "緩衝氫氟酸"}, {"abbr": "BOT", "meaning": "Build, Operate, Transfer (興建、營運、移轉)"}, {"abbr": "BAS", "meaning": "大樓自動化系統"}, {"abbr": "BIM", "meaning": "廠房資訊模擬"}, {"abbr": "BINS", "meaning": "大樓網路整合系統"}, {"abbr": "BSGS", "meaning": "大宗特用氣體系統"}, {"abbr": "BU", "meaning": "蝴蝶閥"}, {"abbr": "BR", "meaning": "丁基橡膠"}, {"abbr": "CP", "meaning": "精煉樹脂塔"}, {"abbr": "CUP", "meaning": "廠務設施大樓"}, {"abbr": "CMP", "meaning": "化學機械研磨"}, {"abbr": "COD", "meaning": "化學需氧量"}, {"abbr": "CVD", "meaning": "化學氣相沉積"}, {"abbr": "CNS", "meaning": "中國國家標準"}, {"abbr": "CCB", "meaning": "化學品槽車填充口"}, {"abbr": "CDA", "meaning": "高壓潔淨空氣"}, {"abbr": "CC-FTIR", "meaning": "密閉式傅立葉紅外線光譜儀"}, {"abbr": "CCTV", "meaning": "閉路電視/監視器"}, {"abbr": "COP", "meaning": "性能係數"}, {"abbr": "CGA", "meaning": "壓縮氣體協會"}, {"abbr": "COA", "meaning": "濃度分析報告"}, {"abbr": "CB", "meaning": "導電帶、傳送帶"}, {"abbr": "CVI", "meaning": "口頭指示確認"}, {"abbr": "CQC", "meaning": "連續品質測試"}, {"abbr": "CPS", "meaning": "連續供電系統"}, {"abbr": "CLC1", "meaning": "預冷盤管"}, {"abbr": "CLC2", "meaning": "再冷盤管"}, {"abbr": "CPO", "meaning": "企業規劃"}, {"abbr": "CD Bar", "meaning": "關鍵尺寸條"}, {"abbr": "CPM", "meaning": "要徑法"}, {"abbr": "XLPE", "meaning": "交聯聚乙烯"}, {"abbr": "CAC", "meaning": "低溫吸附桶槽"}, {"abbr": "CAS", "meaning": "極低溫吸附系統、串聯"}, {"abbr": "CTO", "meaning": "觸媒焚化法"}, {"abbr": "CMD", "meaning": "立方公尺每日"}, {"abbr": "CMH", "meaning": "立方公尺每小時"}, {"abbr": "CSD", "meaning": "汽缸安全裝置"}, {"abbr": "DAHS", "meaning": "數據擷取與處理系統"}, {"abbr": "DH", "meaning": "歷史資料"}, {"abbr": "DCC", "meaning": "循環盤管、乾盤管"}, {"abbr": "DIR", "meaning": "去離子水回收"}, {"abbr": "DI water", "meaning": "去離子水"}, {"abbr": "DTP", "meaning": "設計與技術平台"}, {"abbr": "DISS", "meaning": "直徑指數安全系統"}, {"abbr": "EDI", "meaning": "擴散"}, {"abbr": "DI", "meaning": "數位輸入卡"}, {"abbr": "DO", "meaning": "數位輸出卡"}, {"abbr": "DHF", "meaning": "稀釋氫氟酸"}, {"abbr": "DMSO", "meaning": "二甲基亞砜"}, {"abbr": "DID", "meaning": "直接進線不經總機轉接"}, {"abbr": "DCS", "meaning": "分散式控制系統"}, {"abbr": "DPI", "meaning": "雙重吹掃隔離閥"}, {"abbr": "DVI", "meaning": "沖吹氣體雙隔離閥"}, {"abbr": "DynHx", "meaning": "熱交換器功能模塊"}, {"abbr": "EV", "meaning": "實績、可動用金額"}, {"abbr": "EEWS", "meaning": "地震預警系統"}, {"abbr": "e Bear", "meaning": "中央氣象局的區域地震預警系統"}, {"abbr": "ELPI", "meaning": "電子式低壓衝擊器"}, {"abbr": "ESD", "meaning": "靜電放電"}, {"abbr": "ECP", "meaning": "電化學電鍍、工程協作平台"}, {"abbr": "EGW", "meaning": "電氣焊"}, {"abbr": "EMI", "meaning": "電磁干擾"}, {"abbr": "EMS", "meaning": "電磁耐受"}, {"abbr": "EEM", "meaning": "電子工程管理"}, {"abbr": "EP", "meaning": "電極拋光"}, {"abbr": "ESW", "meaning": "電熔渣焊"}, {"abbr": "EP/ESP", "meaning": "靜電集塵器"}, {"abbr": "EMO", "meaning": "緊急停止鈕"}, {"abbr": "ERVC", "meaning": "砲車"}, {"abbr": "ESO", "meaning": "緊急關斷閥"}, {"abbr": "ECF", "meaning": "能源轉換係數"}, {"abbr": "EWS", "meaning": "程式規劃專用的工作站"}, {"abbr": "ECCP", "meaning": "工程變更驗證計畫"}, {"abbr": "ERC", "meaning": "等量釋放濃度公式、緊急應變中心"}, {"abbr": "e-SCAR", "meaning": "設備異常通知單"}, {"abbr": "EET", "meaning": "蝕刻"}, {"abbr": "EVAM", "meaning": "鬆動量測"}, {"abbr": "EFS", "meaning": "過流量裝置"}, {"abbr": "EA", "meaning": "排氣"}, {"abbr": "ES", "meaning": "專家系統"}, {"abbr": "FAB", "meaning": "晶圓製造廠房"}, {"abbr": "FCCB", "meaning": "晶圓廠工程變更審查委員會"}, {"abbr": "F-CLIP", "meaning": "依生產企劃部提早/準時交貨能力"}, {"abbr": "F-CVP", "meaning": "履行生產企劃部計畫每月交貨量能力"}, {"abbr": "FES", "meaning": "高科技廠房耗能模擬軟體"}, {"abbr": "FAM", "meaning": "廠務的資產管理方案"}, {"abbr": "FMCS", "meaning": "設施管理、廠務監控系統"}, {"abbr": "FMOC", "meaning": "廠務變更管理"}, {"abbr": "FM", "meaning": "工廠手冊資料表"}, {"abbr": "F.C.UNIT", "meaning": "風機盤管機"}, {"abbr": "FFU", "meaning": "風機過濾單元"}, {"abbr": "FFT", "meaning": "快速傅立葉轉換"}, {"abbr": "FAT", "meaning": "出廠前檢查"}, {"abbr": "FCR", "meaning": "現場零星變更"}, {"abbr": "FMP", "meaning": "現場改善建議"}, {"abbr": "FIN", "meaning": "財務及發言人"}, {"abbr": "FID", "meaning": "火焰離子偵測器"}, {"abbr": "FT", "meaning": "流量轉換器"}, {"abbr": "FCAW", "meaning": "包藥焊線電弧焊"}, {"abbr": "FTIR", "meaning": "傅立葉紅外線光譜儀"}, {"abbr": "FE", "meaning": "前段製程"}, {"abbr": "EFB", "meaning": "前段基準測試"}, {"abbr": "GC", "meaning": "氣瓶櫃/氣相層析法"}, {"abbr": "GDS", "meaning": "氣體偵測系統"}, {"abbr": "GIS", "meaning": "特殊氣體系統"}, {"abbr": "GMAW", "meaning": "氣體金屬電弧焊"}, {"abbr": "GMS", "meaning": "氣體偵測系統"}, {"abbr": "GWS", "meaning": "氣體重量設定值"}, {"abbr": "GC-FID", "meaning": "氣相層析火焰離子化偵測器"}, {"abbr": "GC-MS", "meaning": "氣相層析質譜分析儀"}, {"abbr": "GEX", "meaning": "一般性廢氣系統"}, {"abbr": "GPA", "meaning": "政府採購協定"}, {"abbr": "GPT", "meaning": "接地比壓器"}, {"abbr": "HazOp", "meaning": "危害與可操作性分析"}, {"abbr": "HAPs", "meaning": "有害空氣汙染物"}, {"abbr": "HPM", "meaning": "危險性生產材料"}, {"abbr": "HEX", "meaning": "熱交換器"}, {"abbr": "HEPA", "meaning": "高效率空氣過濾網"}, {"abbr": "HPL", "meaning": "高壓測試洩漏閥件"}, {"abbr": "HPV", "meaning": "高壓排放閥"}, {"abbr": "HPI", "meaning": "高壓製程氣體隔離閥、高壓隔離閥"}, {"abbr": "HP", "meaning": "高純度"}, {"abbr": "HMI", "meaning": "操作站 (人機介面)"}, {"abbr": "HPA", "meaning": "高壓測漏閥"}, {"abbr": "HPIa", "meaning": "高壓雙隔離閥"}, {"abbr": "HTC1", "meaning": "燠熱盤管"}, {"abbr": "HTC2", "meaning": "再熱盤管"}, {"abbr": "HR", "meaning": "人資"}, {"abbr": "HF", "meaning": "氫氟酸"}, {"abbr": "ICP-MS", "meaning": "感應耦合電漿質譜儀"}, {"abbr": "IL", "meaning": "照度"}, {"abbr": "EIM", "meaning": "植入"}, {"abbr": "IT", "meaning": "資訊技術"}, {"abbr": "IM", "meaning": "初始化手冊"}, {"abbr": "ICA", "meaning": "儀表控制氣體"}, {"abbr": "IC", "meaning": "積體電路、離子層析儀"}, {"abbr": "IBG", "meaning": "歐洲智慧建築聯盟"}, {"abbr": "ILD", "meaning": "層間介電層"}, {"abbr": "IEEE", "meaning": "電機電子工程師學會"}, {"abbr": "JIS", "meaning": "日本工業規格"}, {"abbr": "KPI", "meaning": "關鍵績效指標"}, {"abbr": "KW", "meaning": "千瓦"}, {"abbr": "LS", "meaning": "限制開關、製程尾氣處理設備"}, {"abbr": "LFM", "meaning": "線性英呎每分鐘"}, {"abbr": "LV", "meaning": "線速度"}, {"abbr": "LO", "meaning": "區域置換"}, {"abbr": "LSR", "meaning": "製程尾氣處理設備"}, {"abbr": "LSC", "meaning": "製程尾氣處理設備"}, {"abbr": "TAP", "meaning": "低壓洩漏測試接入口"}, {"abbr": "LPV", "meaning": "低壓氣體排放閥"}, {"abbr": "LEL", "meaning": "爆炸下限"}, {"abbr": "LPC", "meaning": "大顆微粒子數"}, {"abbr": "MCP", "meaning": "鋼瓶組"}, {"abbr": "MAN", "meaning": "手動"}, {"abbr": "MCVA", "meaning": "手動氣缸閥件輔助"}, {"abbr": "Mg/D", "meaning": "乾燥技術設備"}, {"abbr": "MFM", "meaning": "質量流量計"}, {"abbr": "MSDS", "meaning": "物質安全資料表"}, {"abbr": "MM and RM", "meaning": "資財管理與風險管控"}, {"abbr": "MFS", "meaning": "過流量預防開關"}, {"abbr": "MBB", "meaning": "磁吹式斷路器"}, {"abbr": "MTBF", "meaning": "平均故障間隔時間"}, {"abbr": "MTTR", "meaning": "平均修復時間"}, {"abbr": "MEP", "meaning": "電機管道工程總稱"}, {"abbr": "MP", "meaning": "機械拋光"}, {"abbr": "MVR", "meaning": "機械式蒸氣再壓縮系統"}, {"abbr": "MBR", "meaning": "生物薄膜系統"}, {"abbr": "MDG", "meaning": "脫氣膜"}, {"abbr": "MOF", "meaning": "計器用變壓變流器"}, {"abbr": "MiTAP", "meaning": "微型化分析平台"}, {"abbr": "MIE", "meaning": "最小引火能量"}, {"abbr": "MR", "meaning": "混合實境"}, {"abbr": "MDU", "meaning": "機台供應單元"}, {"abbr": "MON time", "meaning": "測機時間"}, {"abbr": "MFL", "meaning": "最大火災損失"}, {"abbr": "MMF", "meaning": "多層砂濾塔"}, {"abbr": "MIRO", "meaning": "輸出入介面"}, {"abbr": "NFPA", "meaning": "美國國家防火協會"}, {"abbr": "NBA", "meaning": "乙酸正丁酯"}, {"abbr": "NV", "meaning": "針閥"}, {"abbr": "NPSHA", "meaning": "有效淨正吸入揚程"}, {"abbr": "NPSHR", "meaning": "必須淨正吸入揚程"}, {"abbr": "NE-Tube", "meaning": "無縫管道規格"}, {"abbr": "NMP", "meaning": "N-甲基吡咯烷酮"}, {"abbr": "NFB", "meaning": "無熔絲斷路器"}, {"abbr": "NCR", "meaning": "現場施工未符合報告"}, {"abbr": "NMHC", "meaning": "非甲烷碳氫化合物"}, {"abbr": "OEL", "meaning": "職業暴露限值"}, {"abbr": "OPEX", "meaning": "營運成本"}, {"abbr": "OCP", "meaning": "操作員控制台"}, {"abbr": "OTS", "meaning": "訓練管理系統"}, {"abbr": "OCAP", "meaning": "異常處理行動計畫"}, {"abbr": "OOC", "meaning": "超出控制範圍"}, {"abbr": "OOS", "meaning": "超出規格範圍"}, {"abbr": "pan/tilt", "meaning": "雲台/旋轉台"}, {"abbr": "EPA", "meaning": "零件清潔"}, {"abbr": "PM", "meaning": "懸浮微粒、機台例行性保養"}, {"abbr": "ppm", "meaning": "百萬分之一"}, {"abbr": "ppt", "meaning": "兆分之一"}, {"abbr": "PAS", "meaning": "門禁及安全系統"}, {"abbr": "PCB", "meaning": "少油斷路器"}, {"abbr": "PMD", "meaning": "績效管理與發展"}, {"abbr": "PAHU", "meaning": "外氣空調箱"}, {"abbr": "PPE", "meaning": "個人防護裝備"}, {"abbr": "PFA", "meaning": "全氟烷氧基樹脂 (鐵氟龍)"}, {"abbr": "EPH", "meaning": "黃光/曝光設備"}, {"abbr": "PID", "meaning": "光離子化檢測器、比例積分微分"}, {"abbr": "PVD", "meaning": "物理氣相沉積"}, {"abbr": "PDCA", "meaning": "計畫-執行-檢討-改善"}, {"abbr": "PIU", "meaning": "插入裝置"}, {"abbr": "POV", "meaning": "氣動閥"}, {"abbr": "POU", "meaning": "使用端、機台使用點"}, {"abbr": "PE", "meaning": "聚乙烯"}, {"abbr": "PTFE", "meaning": "聚四氟乙烯/聚四氟碳樹脂"}, {"abbr": "PVC", "meaning": "聚氯乙烯"}, {"abbr": "PVDF", "meaning": "聚偏二氟乙烯樹脂"}, {"abbr": "PCO", "meaning": "潛在變更設計"}, {"abbr": "FMEA", "meaning": "失效模式與效應分析"}, {"abbr": "Power SCADA", "meaning": "電力監控系統"}, {"abbr": "PR/PO", "meaning": "請購單/採購單"}, {"abbr": "PV", "meaning": "現值"}, {"abbr": "PRD", "meaning": "釋壓裝置"}, {"abbr": "PT", "meaning": "壓力傳送器/前處理系統"}, {"abbr": "PMS", "meaning": "機台預防保養管理系統"}, {"abbr": "PRI pressure", "meaning": "一次壓 (Primary Pressure)"}, {"abbr": "PCR", "meaning": "價格比較報告"}, {"abbr": "PCW", "meaning": "製程冷卻水"}, {"abbr": "PFW", "meaning": "製程流程圖"}, {"abbr": "PHA", "meaning": "半導體製程危害分析"}, {"abbr": "PLI", "meaning": "製程氣體管路隔離閥"}, {"abbr": "PN2", "meaning": "製程高純氮氣"}, {"abbr": "PRS", "meaning": "製程標準差異比對系統"}, {"abbr": "P&ID", "meaning": "管路及儀表圖"}, {"abbr": "PERT", "meaning": "計畫評核術"}, {"abbr": "PLC", "meaning": "可程式邏輯控制器"}, {"abbr": "PGME", "meaning": "丙二醇單甲醚"}, {"abbr": "PGMEA", "meaning": "丙二醇單甲醚醋酸酯"}, {"abbr": "PGMEP", "meaning": "丙二醇單甲醚丙酸酯"}, {"abbr": "PS", "meaning": "一次變電所"}, {"abbr": "PSI", "meaning": "空氣品質指標"}, {"abbr": "PGB", "meaning": "吹掃氣體涓流閥"}, {"abbr": "PGC", "meaning": "吹掃氣體循環閥"}, {"abbr": "PGI", "meaning": "吹掃氣體隔離閥"}, {"abbr": "PGV", "meaning": "吹掃氣體排放閥"}, {"abbr": "QFD", "meaning": "品質功能展開"}, {"abbr": "QR", "meaning": "品質可靠性"}, {"abbr": "RCO", "meaning": "蓄熱式觸媒焚化爐"}, {"abbr": "RDG", "meaning": "還原氣體偵測器"}, {"abbr": "RTO", "meaning": "蓄熱式焚化爐"}, {"abbr": "RV", "meaning": "洩壓閥"}, {"abbr": "RCAS", "meaning": "遠端串聯系統"}, {"abbr": "ROUT", "meaning": "遠端輸出"}, {"abbr": "PR", "meaning": "研磨速率"}, {"abbr": "RD", "meaning": "研發"}, {"abbr": "RSM", "meaning": "復原階段"}, {"abbr": "rpm", "meaning": "每分鐘轉速"}, {"abbr": "RMR", "meaning": "岩體評分"}, {"abbr": "RQD", "meaning": "岩體品質指標"}, {"abbr": "RRTO", "meaning": "旋轉閥式蓄熱焚化爐"}, {"abbr": "SOMC", "meaning": "安全變更管制程序"}, {"abbr": "SRV", "meaning": "安全洩壓閥"}, {"abbr": "SAG", "meaning": "電壓驟降"}, {"abbr": "SAT", "meaning": "現場接受度測試"}, {"abbr": "SPI", "meaning": "進度績效指數"}, {"abbr": "SV", "meaning": "進度變異"}, {"abbr": "SIPA", "meaning": "科學園區管理局"}, {"abbr": "SEX", "meaning": "酸性廢氣系統"}, {"abbr": "SEC pressure", "meaning": "二次壓 (Secondary Pressure)"}, {"abbr": "SCBA", "meaning": "自給式空氣呼吸器"}, {"abbr": "SP", "meaning": "設定值"}, {"abbr": "SMACNA", "meaning": "美國鈑金與空調承包商協會"}, {"abbr": "SMAW", "meaning": "手工電弧焊"}, {"abbr": "SPM", "meaning": "衝擊波檢測法"}, {"abbr": "STEL", "meaning": "短時間時量平均容許濃度"}, {"abbr": "I/P", "meaning": "電氣/氣壓訊號轉換器"}, {"abbr": "SDS", "meaning": "研磨液供應系統"}, {"abbr": "SMC", "meaning": "特殊微細清洗"}, {"abbr": "SPJ", "meaning": "專案計畫"}, {"abbr": "SG", "meaning": "特殊氣體"}, {"abbr": "S/D", "meaning": "晶圓旋乾機"}, {"abbr": "SS", "meaning": "不鏽鋼、懸浮固體"}, {"abbr": "STS", "meaning": "靜態轉換開關"}, {"abbr": "SB-P", "meaning": "分層樹脂過濾塔"}, {"abbr": "SW", "meaning": "螺栓焊"}, {"abbr": "SAW", "meaning": "潛弧焊"}, {"abbr": "SCADA", "meaning": "數據採集與監控系統"}, {"abbr": "TPC", "meaning": "台灣電力公司"}, {"abbr": "3T", "meaning": "燃燒3T原則(時間、溫度、擾流)"}, {"abbr": "TEOS", "meaning": "四乙氧基矽烷"}, {"abbr": "TMAH", "meaning": "四甲基氫氧化銨"}, {"abbr": "TEAH", "meaning": "四乙基氫氧化銨"}, {"abbr": "T-WAH", "meaning": "理論每小時晶圓產出"}, {"abbr": "TMPI", "meaning": "亞磷酸三甲酯"}, {"abbr": "ETF", "meaning": "薄膜"}, {"abbr": "TFC", "meaning": "薄層複合膜"}, {"abbr": "TLV", "meaning": "閾限值"}, {"abbr": "TTV", "meaning": "總厚度變異"}, {"abbr": "TWA", "meaning": "八小時時量平均容許濃度"}, {"abbr": "TDD", "meaning": "總需量失真"}, {"abbr": "TSM", "meaning": "全面 EHS 安全管理"}, {"abbr": "THC", "meaning": "總碳氫化合物"}, {"abbr": "TOC", "meaning": "總有機碳"}, {"abbr": "TQC", "meaning": "全面品質管制"}, {"abbr": "TSD", "meaning": "觸控螢幕顯示器"}, {"abbr": "TMB", "meaning": "硼酸三甲酯"}, {"abbr": "TMPO", "meaning": "磷酸三甲酯"}, {"abbr": "ETU", "meaning": "管路清洗試驗"}, {"abbr": "UIGC", "meaning": "聯亞氣體"}, {"abbr": "UF", "meaning": "超濾膜"}, {"abbr": "UPW", "meaning": "超純水系統"}, {"abbr": "UV", "meaning": "紫外線"}, {"abbr": "UL", "meaning": "美國保險商實驗室"}, {"abbr": "UBC97", "meaning": "1997年統一建築規範"}, {"abbr": "UPS", "meaning": "不斷電系統"}, {"abbr": "UCM", "meaning": "單元控制模組"}, {"abbr": "USS", "meaning": "二次變電站"}, {"abbr": "UEL", "meaning": "爆炸上限"}, {"abbr": "UCA", "meaning": "高壓潔淨空氣"}, {"abbr": "UN2", "meaning": "一般氮氣"}, {"abbr": "UVIR", "meaning": "紫外/紅外雙波段火焰偵測器"}, {"abbr": "VAR", "meaning": "真空電弧重熔爐"}, {"abbr": "VIM", "meaning": "真空感應熔煉"}, {"abbr": "VB", "meaning": "價電帶"}, {"abbr": "VE", "meaning": "價值工程"}, {"abbr": "VECP", "meaning": "價值工程變更提議"}, {"abbr": "VDP", "meaning": "閥件分配面板"}, {"abbr": "VMP", "meaning": "閥件歧管盤"}, {"abbr": "VMB", "meaning": "特氣分流閥箱"}, {"abbr": "VAV", "meaning": "變風量系統"}, {"abbr": "VMN", "meaning": "供應商料號"}, {"abbr": "VVS", "meaning": "文氏管真空源閥"}, {"abbr": "VESDA", "meaning": "極早期煙霧警報系統"}, {"abbr": "VG", "meaning": "真空發生器"}, {"abbr": "VIB", "meaning": "振動量測器"}, {"abbr": "VR", "meaning": "虛擬實境"}, {"abbr": "VEX", "meaning": "有機廢氣系統"}, {"abbr": "VOCs", "meaning": "揮發性有機化合物"}, {"abbr": "WAT", "meaning": "晶圓接受度測試"}, {"abbr": "WIP", "meaning": "在製品 (在線晶圓數)"}, {"abbr": "WPH", "meaning": "每小時晶圓產量"}, {"abbr": "EWR", "meaning": "晶圓回收"}, {"abbr": "WCVT", "meaning": "關閥等待時間"}, {"abbr": "WOVT", "meaning": "開閥等待時間"}, {"abbr": "WCCS", "meaning": "廢酸收集系統"}, {"abbr": "WCB", "meaning": "槽車廢液連接箱"}, {"abbr": "WEP", "meaning": "濕式靜電集塵器"}, {"abbr": "WESP", "meaning": "濕式靜電集塵器"}, {"abbr": "WBS", "meaning": "工作分解結構"}, {"abbr": "WWSS", "meaning": "全球銷售與服務"}, {"abbr": "BLI", "meaning": "美好生活指數"}, {"abbr": "ASC", "meaning": "硫酸銨結晶/乾燥系統"}, {"abbr": "ASRS", "meaning": "自動倉儲系統"}, {"abbr": "CCD", "meaning": "電荷耦合元件/相機"}, {"abbr": "CDS", "meaning": "化學品供應系統"}, {"abbr": "ERT", "meaning": "緊急應變小組"}, {"abbr": "MTR", "meaning": "主變壓器"}, {"abbr": "WWT", "meaning": "廢水處理系統"}];
+
+let mode='exam', deck=[], idx=0, correct=0, answered=0, wrongSet=new Set();
+let current=null, locked=false;
+
+function loadWrong(){try{return new Set(JSON.parse(localStorage.getItem('wrongSet')||'[]'))}catch(e){return new Set()}}
+function saveWrong(){localStorage.setItem('wrongSet', JSON.stringify([...wrongSet])); updateWrongCount()}
+wrongSet=loadWrong(); updateWrongCount();
+
+function updateWrongCount(){document.getElementById('wrongCount').textContent=wrongSet.size}
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function clearWrong(){
+  if(wrongSet.size === 0) {
+    alert("目前沒有錯題紀錄喔！");
+    return;
+  }
+  if(confirm("確定要清空所有紀錄的錯題嗎？此動作無法復原。")){
+    wrongSet.clear();
+    saveWrong();
+    alert("錯題紀錄已清空！");
+    if(mode === 'wrong') {
+      showNoWrong();
+    }
+  }
+}
+
+function setMode(m){
+  mode=m;
+  document.querySelectorAll('.menu button').forEach(b=>b.classList.remove('active'));
+  if(m==='exam') document.getElementById('examBtn').classList.add('active');
+  else if(m==='all') document.getElementById('allBtn').classList.add('active');
+  else if(m==='wrong') document.getElementById('wrongBtn').classList.add('active');
+  startExam();
+}
+
+function startExam(){
+  let source = DATA;
+  if(mode==='wrong') source = DATA.filter(x=>wrongSet.has(x.abbr));
+  
+  if(mode==='wrong' && !source.length){showNoWrong();return}
+  
+  let shuffled = shuffle(source);
+  if(mode==='exam'){
+    deck = shuffled.slice(0, 50);
+  } else {
+    deck = shuffled;
+  }
+  
+  idx=0;correct=0;answered=0;current=null;locked=false;
+  document.getElementById('quizCard').style.display='block';
+  document.getElementById('resultCard').style.display='none';
+  render();
+}
+
+function showNoWrong(){
+  document.getElementById('quizCard').style.display='none';
+  let r=document.getElementById('resultCard');
+  r.style.display='block';
+  r.innerHTML='<div class="result"><h2>目前沒有錯題 🎉</h2><p>答錯的題目會自動記錄於此。</p><button class="btn primary" onclick="setMode(\'exam\')">開始 50 題模擬考</button></div>';
+}
+
+function makeOptions(correctMeaning){
+  const pool=[...new Set(DATA.map(x=>x.meaning).filter(x=>x!==correctMeaning))];
+  return shuffle([correctMeaning,...shuffle(pool).slice(0,3)]);
+}
+
+function render(){
+  if(idx>=deck.length){finish();return}
+  locked=false;current=deck[idx];
+  document.getElementById('counter').textContent=`第 ${idx+1} / ${deck.length} 題`;
+  
+  if(mode==='exam') {
+    document.getElementById('accuracy').textContent=`當前得分: ${correct * 2} 分`;
+  } else {
+    document.getElementById('accuracy').textContent=answered?`正確率 ${Math.round(correct/answered*100)}%`:'';
+  }
+  
+  document.getElementById('bar').style.width=((idx)/deck.length*100)+'%';
+  document.getElementById('abbr').textContent=current.abbr;
+  
+  const opts=makeOptions(current.meaning), box=document.getElementById('options');
+  box.innerHTML='';
+  const letters=['A','B','C','D'];
+  opts.forEach((o,i)=>{
+    let b=document.createElement('button');
+    b.className='opt';
+    b.innerHTML=`<span class="letter">${letters[i]}.</span>${escapeHtml(o)}`;
+    b.onclick=()=>answer(b,o);
+    box.appendChild(b);
+  });
+  
+  const fb=document.getElementById('feedback');
+  fb.className='feedback';
+  fb.innerHTML='';
+  document.getElementById('nextBtn').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function answer(btn,choice){
+  if(locked)return;
+  locked=true;
+  answered++;
+  const buttons=[...document.querySelectorAll('.opt')];
+  const ok=choice===current.meaning;
+  
+  if(ok){
+    correct++;
+    wrongSet.delete(current.abbr);
+    btn.classList.add('correct');
+    document.getElementById('feedback').className='feedback good';
+    document.getElementById('feedback').innerHTML='✓ 答對了！';
+  } else {
+    wrongSet.add(current.abbr);
+    btn.classList.add('wrong');
+    buttons.forEach(b=>{
+      if(b.textContent.slice(3)===current.meaning || b.innerHTML.includes(escapeHtml(current.meaning))){
+        b.classList.add('correct');
+      } else if(b!==btn){
+        b.classList.add('dim');
+      }
+    });
+    document.getElementById('feedback').className='feedback bad';
+    document.getElementById('feedback').innerHTML=`✗ 答錯了<br>正確答案：<strong>${escapeHtml(current.meaning)}</strong>`;
+  }
+  
+  saveWrong();
+  buttons.forEach(b=>b.disabled=true);
+  document.getElementById('nextBtn').style.display='block';
+  
+  if(mode==='exam') {
+    document.getElementById('accuracy').textContent=`當前得分: ${correct * 2} 分`;
+  } else {
+    document.getElementById('accuracy').textContent=`正確率 ${Math.round(correct/answered*100)}%`;
+  }
+}
+
+function nextQuestion(){idx++;render()}
+function skipQuestion(){if(locked)return;idx++;render()}
+
+function finish(){
+  document.getElementById('quizCard').style.display='none';
+  const r=document.getElementById('resultCard');
+  r.style.display='block';
+  
+  if(mode==='exam') {
+    const finalScore = correct * 2;
+    const isPass = finalScore >= 80;
+    const scoreClass = isPass ? 'pass' : 'fail';
+    const evalText = isPass ? '🎉 恭喜及格！觀念很紮實喔！' : '💪 差一點點，再多複習錯題吧！';
+    
+    r.innerHTML=`<div class="result">
+      <div>模擬考得分</div>
+      <div class="score ${scoreClass}">${finalScore} <span style="font-size:24px;color:var(--text)">分</span></div>
+      <p>${evalText}<br>答對 ${correct} / 50 題 (錯題庫累積 ${wrongSet.size} 題)</p>
+      <div class="row">
+        <button class="btn primary" onclick="startExam()">再考一次 (隨機50題)</button>
+        <button class="btn secondary" onclick="setMode('wrong')">重考錯題</button>
+      </div>
+    </div>`;
+  } else {
+    const pct=answered?Math.round(correct/answered*100):0;
+    r.innerHTML=`<div class="result">
+      <div>本次刷題完成</div>
+      <div class="score">${pct}%</div>
+      <p>${correct} / ${answered} 題答對<br>錯題庫累積 ${wrongSet.size} 題</p>
+      <div class="row">
+        <button class="btn primary" onclick="startExam()">重新刷題</button>
+        <button class="btn secondary" onclick="setMode('wrong')">重考錯題</button>
+      </div>
+    </div>`;
+  }
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+
+startExam();
+</script>
+</body>
+</html>
