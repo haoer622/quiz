@@ -179,7 +179,7 @@ function render(){
   fb.className = 'feedback';
   fb.innerHTML = '';
   
-  // 若該題已經做答過（瀏覽模式）
+  // 若該題已經做答過（瀏覽模式或回到上一題）
   if(currentRecord.isAnswered) {
     const buttons = [...box.children];
     buttons.forEach(b => b.disabled = true);
@@ -188,14 +188,24 @@ function render(){
     
     // 標示選項狀態
     buttons.forEach(b => {
-      const choiceText = b.textContent.slice(3);
-      if(choiceText === currentItem.meaning) {
-        b.classList.add('correct');
-      }
-      if(choiceText === currentRecord.userChoice && !currentRecord.isCorrect) {
-        b.classList.add('wrong');
-      } else if(choiceText !== currentItem.meaning) {
-        b.classList.add('dim');
+      const choiceText = b.textContent.replace(/^[A-D]\.\s*/, ''); // 移除選項字詞前的字母標籤 (例如 "A. ")
+      
+      if(currentRecord.isCorrect) {
+        // 答對時：使用者選擇的選項加上綠色 (correct)，其他選項淡化 (dim)
+        if(choiceText === currentRecord.userChoice) {
+          b.classList.add('correct');
+        } else {
+          b.classList.add('dim');
+        }
+      } else {
+        // 答錯或跳過時：標示正確答案為綠色 (correct)，選錯的選項為紅色 (wrong)，其餘淡化 (dim)
+        if(choiceText === currentItem.meaning) {
+          b.classList.add('correct');
+        } else if(choiceText === currentRecord.userChoice) {
+          b.classList.add('wrong');
+        } else {
+          b.classList.add('dim');
+        }
       }
     });
     
